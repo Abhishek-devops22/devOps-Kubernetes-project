@@ -1,0 +1,52 @@
+# eksctl ClusterConfig
+# Declarative definition of an Amazon EKS cluster with 2 worker nodes.
+#
+# This file does NOT create anything by itself. It only takes effect when
+# applied with `eksctl create cluster -f deployment.yml` (see README.md for
+# the full step-by-step).
+#
+# Docs: https://eksctl.io/usage/schema/
+
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+metadata:
+  name: my-eks-cluster       # change to your preferred cluster name
+  region: us-east-1          # change to your preferred AWS region
+  version: "1.30"            # Kubernetes version
+
+# --- Networking -------------------------------------------------------
+# Leave this out to let eksctl create a new dedicated VPC for the cluster.
+# vpc:
+#   id: "vpc-xxxxxxxx"
+#   subnets:
+#     private:
+#       us-east-1a: { id: "subnet-xxxxxxxx" }
+#       us-east-1b: { id: "subnet-xxxxxxxx" }
+
+# --- IAM ----------------------------------------------------------------
+iam:
+  withOIDC: true              # enables IAM Roles for Service Accounts (IRSA)
+
+# --- Worker nodes ---------------------------------------------------------
+# A managed node group with exactly 2 worker nodes.
+managedNodeGroups:
+  - name: worker-nodes
+    instanceType: t3.medium
+    desiredCapacity: 2
+    minSize: 2
+    maxSize: 2
+    volumeSize: 20
+    privateNetworking: true
+    labels:
+      role: worker
+    tags:
+      Environment: dev
+    ssh:
+      allow: false            # set true + add publicKeyName to enable SSH access
+
+# --- Add-ons --------------------------------------------------------------
+addons:
+  - name: vpc-cni
+  - name: coredns
+  - name: kube-proxy
