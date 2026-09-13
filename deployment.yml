@@ -28,6 +28,21 @@ metadata:
 iam:
   withOIDC: true              # enables IAM Roles for Service Accounts (IRSA)
 
+# IRSA role for the AWS Load Balancer Controller (see ingress/README.md).
+# Requires the AWSLoadBalancerControllerIAMPolicy to already exist — created
+# in ingress step 1 — before you run `eksctl create cluster`. Uncomment once
+# you've created that policy, filling in your AWS account ID. If you skip
+# this, you can instead create the service account later with
+# `eksctl create iamserviceaccount` (also documented in ingress/README.md).
+# iamServiceAccounts:
+#   - metadata:
+#       name: aws-load-balancer-controller
+#       namespace: kube-system
+#     attachPolicyARNs:
+#       - "arn:aws:iam::<ACCOUNT_ID>:policy/AWSLoadBalancerControllerIAMPolicy"
+#     roleName: AmazonEKSLoadBalancerControllerRole
+#     roleOnly: false
+
 # --- Worker nodes ---------------------------------------------------------
 # A managed node group with exactly 2 worker nodes.
 managedNodeGroups:
