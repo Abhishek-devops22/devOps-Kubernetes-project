@@ -35,19 +35,31 @@ flowchart TB
 
         EKS -->|"joins cluster"| NG
         VPC --> NG
+
+        ALB["Application Load Balancer\n(provisioned per Ingress)"]
+        VPC --> ALB
     end
 
     N1 --> P1["Pods"]
     N2 --> P2["Pods"]
 
-    Kubectl["🧑‍💻 kubectl"] -->|"kubectl get nodes/pods"| CP
+    LBC["AWS Load Balancer Controller\n(runs as pods in kube-system)"] -->|"watches Ingress objects,\ncreates/manages ALB via AWS API"| ALB
+    N1 -.-> LBC
+    Internet["🌐 Internet"] -->|"HTTP/HTTPS"| ALB
+    ALB -->|"routes by path/host"| P1
+    ALB --> P2
+
+    Kubectl["🧑‍💻 kubectl"] -->|"kubectl get nodes/pods/ingress"| CP
 ```
 
 **Flow:** you run `eksctl create cluster -f deployment.yml` → eksctl provisions
 CloudFormation stacks → those create the VPC, the EKS control plane (AWS-managed),
 IAM/OIDC setup, and a managed node group of **2 EC2 worker nodes** → the nodes
-register with the control plane and are ready to run pods → you interact with
-the cluster afterward via `kubectl`.
+register with the control plane and are ready to run pods. Separately, the
+**AWS Load Balancer Controller** (see `ingress/README.md`) runs as pods on
+those worker nodes; it watches `Ingress` objects and provisions a real ALB in
+the VPC for each one, routing internet traffic to the matching pods. You
+interact with the cluster via `kubectl`.
 
 ## Prerequisites
 
@@ -124,9 +136,16 @@ kubectl version --client
    eksctl get nodegroup --cluster my-eks-cluster --region us-east-1
    ```
 
+## Ingress controller
+
+Once the cluster is up, see [`ingress/README.md`](ingress/README.md) to
+install the **AWS Load Balancer Controller** and expose services publicly via
+`Ingress` resources (provisions a real ALB per Ingress).
+
 ## Tearing it down
 
-To avoid ongoing AWS charges, delete everything when you're done:
+Remove the ingress controller and any ALBs it created **first** (see
+`ingress/README.md`), then delete the cluster to avoid ongoing AWS charges:
 
 ```bash
 eksctl delete cluster -f deployment.yml
@@ -136,3 +155,5 @@ eksctl delete cluster -f deployment.yml
 
 - `deployment.yml` — eksctl `ClusterConfig` defining the EKS cluster and its
   2-node managed node group.
+- `ingress/` — AWS Load Balancer Controller setup (IAM policy, `IngressClass`,
+  demo app + `Ingress`) and its own step-by-step README.
