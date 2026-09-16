@@ -1,0 +1,13 @@
+# Non-sensitive configuration for the demo app. Safe to commit — no
+# credentials or connection strings belong here (those go in secret.yaml,
+# see secret.example.yaml).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: default
+data:
+  DB_NAME: "myapp"
+  DB_HOST: "myapp-db.example.com"
+  DB_PORT: "5432"
+  APP_ENV: "production"

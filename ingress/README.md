@@ -12,8 +12,10 @@ top-level `deployment.yml`) already exists.
 |------|---------|
 | `iam-policy.json` | Official AWS IAM policy required by the controller (fetched from the upstream project). |
 | `ingress-class.yaml` | `IngressClass` named `alb`, set as the cluster default. |
-| `sample-app.yaml` | Minimal demo `Deployment` + `Service` to route traffic to. |
+| `sample-app.yaml` | Minimal demo `Deployment` + `Service` to route traffic to. Reads env vars from `app-config`/`app-secrets`. |
 | `sample-ingress.yaml` | Example `Ingress` that provisions a public ALB routing `/` to the demo app. |
+| `configmap.yaml` | Non-sensitive app config (`DB_NAME`, `DB_HOST`, `DB_PORT`, ...). Safe to commit. |
+| `secret.example.yaml` | Template for sensitive app config (`DB_USER`, `DB_PASSWORD`, `DB_URL`). Copy to `secret.yaml` and fill in real values — `secret.yaml` is git-ignored. |
 
 ## Prerequisites
 
@@ -91,12 +93,27 @@ top-level `deployment.yml`) already exists.
    kubectl apply -f ingress/ingress-class.yaml
    ```
 
-6. **Deploy the demo app and its Ingress:**
+6. **Create the app config (ConfigMap + Secret), then deploy the demo app
+   and its Ingress:**
 
    ```bash
+   # Non-sensitive config — commit-safe, edit values directly if needed.
+   kubectl apply -f ingress/configmap.yaml
+
+   # Sensitive config — create your real secret.yaml from the template first
+   # (never commit this file; it's already in .gitignore).
+   cp ingress/secret.example.yaml ingress/secret.yaml
+   # edit ingress/secret.yaml with real DB_USER / DB_PASSWORD / DB_URL
+   kubectl apply -f ingress/secret.yaml
+
    kubectl apply -f ingress/sample-app.yaml
    kubectl apply -f ingress/sample-ingress.yaml
    ```
+
+   The demo container picks up every key from both `app-config` and
+   `app-secrets` as environment variables (via `envFrom` in
+   `sample-app.yaml`) — `DB_NAME`, `DB_HOST`, `DB_PORT`, `DB_USER`,
+   `DB_PASSWORD`, `DB_URL`, etc.
 
 7. **Get the ALB address** (takes a minute or two to provision):
 
@@ -107,11 +124,19 @@ top-level `deployment.yml`) already exists.
    Once `ADDRESS` is populated, `curl` it (or open in a browser) to see
    `Hello from the EKS cluster!`.
 
+   To confirm the env vars actually made it into the pod:
+
+   ```bash
+   kubectl exec deploy/hello-app -- env | grep -E 'DB_|APP_ENV'
+   ```
+
 ## Tearing it down
 
 ```bash
 kubectl delete -f ingress/sample-ingress.yaml
 kubectl delete -f ingress/sample-app.yaml
+kubectl delete -f ingress/secret.yaml
+kubectl delete -f ingress/configmap.yaml
 helm uninstall aws-load-balancer-controller -n kube-system
 eksctl delete iamserviceaccount --cluster my-eks-cluster --namespace kube-system --name aws-load-balancer-controller
 aws iam delete-policy --policy-arn arn:aws:iam::<ACCOUNT_ID>:policy/AWSLoadBalancerControllerIAMPolicy

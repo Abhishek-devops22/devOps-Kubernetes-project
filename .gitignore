@@ -1,0 +1,7 @@
+# Real Kubernetes Secret manifests — never commit actual credentials.
+# Copy ingress/secret.example.yaml to ingress/secret.yaml and fill in real
+# values locally; secret.yaml itself stays untracked.
+ingress/secret.yaml
+
+# macOS
+.DS_Store
