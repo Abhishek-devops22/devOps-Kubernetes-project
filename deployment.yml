@@ -1,5 +1,5 @@
 # eksctl ClusterConfig
-# Declarative definition of an Amazon EKS cluster with 2 worker nodes.
+# Declarative definition of an Amazon EKS cluster with 2 worker nodes in ap-south-1.
 #
 # This file does NOT create anything by itself. It only takes effect when
 # applied with `eksctl create cluster -f deployment.yml` (see README.md for
@@ -12,8 +12,8 @@ kind: ClusterConfig
 
 metadata:
   name: my-eks-cluster       # change to your preferred cluster name
-  region: us-east-1          # change to your preferred AWS region
-  version: "1.30"            # Kubernetes version
+  region: ap-south-1          # change to your preferred AWS region
+  version: "1.37"            # Kubernetes Latest version
 
 # --- Networking -------------------------------------------------------
 # Leave this out to let eksctl create a new dedicated VPC for the cluster.
@@ -21,8 +21,8 @@ metadata:
 #   id: "vpc-xxxxxxxx"
 #   subnets:
 #     private:
-#       us-east-1a: { id: "subnet-xxxxxxxx" }
-#       us-east-1b: { id: "subnet-xxxxxxxx" }
+#       ap-south-1a: { id: "subnet-xxxxxxxx" }
+#       ap-south-1b: { id: "subnet-xxxxxxxx" }
 
 # --- IAM ----------------------------------------------------------------
 iam:
