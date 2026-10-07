@@ -142,5 +142,5 @@ eksctl delete iamserviceaccount --cluster my-eks-cluster --namespace kube-system
 aws iam delete-policy --policy-arn arn:aws:iam::<ACCOUNT_ID>:policy/AWSLoadBalancerControllerIAMPolicy
 ```
 
-(Do this before `eksctl delete cluster`, and only after removing any
+(Run the above commands before executing `eksctl delete cluster`, and only after removing any
 Ingress-provisioned ALBs — deleting the cluster first can orphan the ALB.)
